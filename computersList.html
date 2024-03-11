@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Computer Management | Computers List</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css
+" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js
+"></script>
+  <style>
+    #loading {
+      display: none;
+    }
+
+    #error {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="container-fluid bg-body-tertiary">
+    <nav class="navbar navbar-expand-lg">
+      <a class="navbar-brand" href="index.html">Computer Management</a>
+      <button class='navbar-toggler' type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+          <li class="nav-item"><a href="computersList.html" class="nav-link">Computers List</a></li>
+          <li class="nav-item"><a href="addComputers.html" class="nav-link">Add Computers</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container mt-4">
+
+    <div id="loading" class="alert alert-info">Loading...</div>
+
+    <div id="error" class="alert alert-danger"></div>
+
+    <h1>Computer List</h1>
+
+    <div>
+      <label for="category" class="form-label">Filter by Category:</label>
+      <select id="category" class="form-select">
+        <option value="All">All</option>
+        <option value="Laptop">Laptop</option>
+        <option value="Desktop">Desktop</option>
+        <option value="Tablet">Tablet</option>
+      </select>
+    </div>
+
+    <ul class="list-group mt-3" id="computerList"></ul>
+  </main>
+
+  <script>
+    const category = document.querySelector("#category")
+    const apiUrl = " https://computer-backend-student-neog.replit.app/computers"
+    let computerList = document.querySelector("#computerList")
+    const loading = document.querySelector("#loading")
+    const errorMsg = document.querySelector("#error")
+
+    function fetchData() {
+
+      loading.style.display = "block"
+      errorMsg.textContent = ""
+      errorMsg.style.display = "none"
+
+      fetch(apiUrl)
+        .then(function (response) {
+          return response.json()
+        })
+        .then(function (data) {
+          if (data) {
+
+            const filteredData = []
+            if (category.value === "All") {
+              filteredData.push(...data)
+            }
+            else {
+              for (let i = 0; i < data.length; i++) {
+                if (category.value === data[i].category) {
+                  filteredData.push(data[i])
+                }
+              }
+            }
+
+            renderUI(filteredData)
+
+          }
+        })
+        .catch(function (error) {
+          loading.style.display = 'none'
+          errorMsg.textContent = "An error occured while fetching data."
+          errorMsg.style.display = "block"
+
+        })
+    }
+
+    function renderUI(data) {
+      loading.style.display = "none"
+      computerList.innerHTML = ""
+      for (let i = 0; i < data.length; i++) {
+        const li = document.createElement("li")
+        li.className = "list-group-item"
+        li.innerHTML = `${data[i].name} - Quantity: ${data[i].quantity} - Category: ${data[i].category} - ManufactureDate: ${data[i].manufactureDate} <button class="btn btn-danger float-end" id="delBtns" data-id = "${data[i]._id}">Delete</button>`
+
+
+        computerList.appendChild(li)
+
+      }
+
+      const delBtns = document.querySelectorAll("#delBtns")
+
+      for (let i = 0; i < delBtns.length; i++) {
+
+        delBtns[i].addEventListener("click", function (event) {
+          const computerId = event.target.getAttribute("data-id")
+
+          const apiDelUrl = `${apiUrl}/${computerId}`
+
+          fetch(apiDelUrl, {
+            method: "DELETE"
+          })
+            .then(function (response) {
+              return response.json()
+            })
+            .then(function (data) {
+              if (data) {
+                fetchData()
+              }
+            })
+            .catch(function (error) {
+              loading.style.display = 'none'
+              errorMsg.textContent = "An error occured while deleting data."
+              errorMsg.style.display = "block"
+
+            })
+        })
+
+      }
+
+    }
+
+    category.addEventListener("change", function () {
+      computerList.textContent = ""
+      fetchData()
+    })
+
+    fetchData()
+  </script>
+</body>
+
+</html>
